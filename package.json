@@ -75,6 +75,12 @@
         ],
         "commands": [
             {
+                "command": "cml.preview",
+                "title": "Open CML Preview",
+                "category": "Context Mapper",
+                "icon": "$(open-preview)"
+            },
+            {
                 "command": "cml.generate.puml.proxy",
                 "title": "Generate PlantUML Diagrams",
                 "when": "editorLangId == cml"
@@ -101,7 +107,19 @@
             }
         ],
         "menus": {
+            "editor/title": [
+                {
+                    "when": "editorLangId == cml",
+                    "command": "cml.preview",
+                    "group": "navigation"
+                }
+            ],
             "editor/context": [
+                {
+                    "when": "resourceLangId == cml",
+                    "command": "cml.preview",
+                    "group": "cmlPreview@0"
+                },
                 {
                     "when": "resourceLangId == cml",
                     "command": "cml.generate.contextmap.proxy",
@@ -129,6 +147,13 @@
                 }
             ]
         },
+        "keybindings": [
+            {
+                "command": "cml.preview",
+                "key": "alt+shift+p",
+                "when": "editorLangId == cml"
+            }
+        ],
         "configuration": {
             "title": "Context Mapper",
             "properties": {

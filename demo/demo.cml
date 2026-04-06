@@ -1,4 +1,74 @@
-// no content yet
-BoundedContext name {
-    
+ContextMap InsuranceContextMap {
+    type = SYSTEM_LANDSCAPE
+    state = TO_BE
+
+    contains CustomerManagement, PolicyManagement, ClaimManagement, PrintingContext
+
+    CustomerManagement [D,ACL]<-[U,OHS,PL] PolicyManagement
+
+    CustomerManagement [D]<-[U] ClaimManagement
+
+    ClaimManagement [U,OHS]->[D,ACL] PrintingContext
+
+    PolicyManagement [P]<->[P] ClaimManagement
+}
+
+BoundedContext CustomerManagement {
+    type = FEATURE
+    domainVisionStatement = "Manages customer data and self-service."
+    implementationTechnology = "Java / Spring Boot"
+
+    Aggregate Customers {
+        Entity Customer {
+            aggregateRoot
+            String firstName
+            String lastName
+        }
+    }
+
+    Aggregate Addresses {
+        Entity Address {
+            aggregateRoot
+            String street
+            String city
+        }
+    }
+}
+
+BoundedContext PolicyManagement {
+    type = APPLICATION
+    domainVisionStatement = "Manages policies and their lifecycle."
+    implementationTechnology = "Java / Spring Boot"
+
+    Aggregate Policies {
+        Entity Policy {
+            aggregateRoot
+            String policyNumber
+        }
+    }
+}
+
+BoundedContext ClaimManagement {
+    type = APPLICATION
+    domainVisionStatement = "Manages insurance claims."
+    implementationTechnology = "Kotlin / Ktor"
+
+    Aggregate Claims {
+        Entity Claim {
+            aggregateRoot
+            String claimNumber
+        }
+    }
+}
+
+BoundedContext PrintingContext {
+    type = SYSTEM
+    domainVisionStatement = "Handles document printing and delivery."
+    implementationTechnology = "Python / FastAPI"
+}
+
+Domain InsuranceDomain {
+    Subdomain CustomerDomain
+    Subdomain PolicyDomain
+    Subdomain ClaimDomain
 }
