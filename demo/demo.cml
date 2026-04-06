@@ -4,13 +4,13 @@ ContextMap InsuranceContextMap {
 
     contains CustomerManagement, PolicyManagement, ClaimManagement, PrintingContext
 
-    CustomerManagement [D,ACL] -> [U,OHS,PL] PolicyManagement
+    CustomerManagement [D,ACL]<-[U,OHS,PL] PolicyManagement
 
-    CustomerManagement [D] -> [U] ClaimManagement
+    CustomerManagement [D]<-[U] ClaimManagement
 
-    ClaimManagement [U,OHS] -> [D,ACL] PrintingContext
+    ClaimManagement [U,OHS]->[D,ACL] PrintingContext
 
-    PolicyManagement Partnership ClaimManagement
+    PolicyManagement [P]<->[P] ClaimManagement
 }
 
 BoundedContext CustomerManagement {
