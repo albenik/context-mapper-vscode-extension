@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,11 +38,37 @@ jobs:
           ${{ runner.os }}-gradle-
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-    - name: Publish Release
+    - name: Validate semantic version tag
+      run: |
+        if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Tag '${GITHUB_REF_NAME}' is not valid semver (expected vMAJOR.MINOR.PATCH)."
+          exit 1
+        fi
+    - name: Sync package.json version from tag
+      run: npm pkg set version="${GITHUB_REF_NAME#v}"
+    - name: Build release VSIX
       uses: GabrielBB/xvfb-action@v1.6
       with:
-        run: ./gradlew clean final publish publishToOpenVSX -Prelease.useLastTag=true
+        run: ./gradlew clean final vscodeExtension -Prelease.useLastTag=true
+    - name: Create GitHub release and upload VSIX
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: ${{ github.ref_name }}
+        files: build/vscode/vscode-extension-*.vsix
+        generate_release_notes: true
+    - name: Publish to VS Code Marketplace
+      if: ${{ secrets.MS_MARKETPLACE_ACCESS_TOKEN != '' }}
+      uses: GabrielBB/xvfb-action@v1.6
+      with:
+        run: ./gradlew publish -Prelease.useLastTag=true
       env:
         MS_MARKETPLACE_ACCESS_TOKEN: ${{ secrets.MS_MARKETPLACE_ACCESS_TOKEN }}
+    - name: Publish to OpenVSX
+      if: ${{ secrets.OPENVSX_ACCESS_TOKEN != '' }}
+      uses: GabrielBB/xvfb-action@v1.6
+      with:
+        run: ./gradlew publishToOpenVSX -Prelease.useLastTag=true
+      env:
         OPENVSX_ACCESS_TOKEN: ${{ secrets.OPENVSX_ACCESS_TOKEN }}
 
