@@ -1,6 +1,8 @@
 ![Context Mapper](https://raw.githubusercontent.com/wiki/ContextMapper/context-mapper-dsl/logo/cm-logo-github-small.png) 
 # Context Mapper VS Code Extension 
-[![Build](https://github.com/ContextMapper/vscode-extension/workflows/Build/badge.svg)](https://github.com/ContextMapper/vscode-extension/actions) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build](https://github.com/albenik/context-mapper-vscode-extension/actions/workflows/build.yml/badge.svg)](https://github.com/albenik/context-mapper-vscode-extension/actions) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+This repository is a **fork** of the [original Context Mapper VS Code extension](https://github.com/ContextMapper/vscode-extension). It has been **enhanced with AI-assisted development** to add functionality that was missing from the upstream project. If you have concerns about AI-generated or AI-assisted code in your toolchain, you should be aware of that before using this fork. The [official extension](https://github.com/ContextMapper/vscode-extension) and [Marketplace listing](https://marketplace.visualstudio.com/items?itemName=contextmapper.context-mapper-vscode-extension) remain alternatives without this fork’s additions.
 
 [ContextMapper](https://contextmapper.org/) is an open source tool providing a Domain-specific Language based on Domain-Driven Design (DDD) patterns for context mapping and service decomposition.
 
