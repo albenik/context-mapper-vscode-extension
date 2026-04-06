@@ -9,6 +9,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-lan
 import * as generators from "./commands/generators";
 import * as transformations from "./commands/transformations";
 import * as quickfixCommands from "./commands/quickfixcommands";
+import { CmlPreviewPanel } from "./preview/cmlPreviewPanel";
 
 let lc: LanguageClient;
 
@@ -56,6 +57,11 @@ export function activate(context: ExtensionContext) {
         commands.registerCommand("cml.ar.wrapValueInCluster.proxy", transformations.executeGenericCommandWithSingleStringArg("cml.ar.wrapValueInCluster")),
         commands.registerCommand("cml.ar.createStakeholderForUserStoryRole.proxy", transformations.executeGenericCommandWithSingleStringArg("cml.ar.createStakeholderForUserStoryRole")),
         commands.registerCommand("cml.ar.createValueRegisterForBoundedContext.proxy", transformations.executeGenericCommandWithSingleStringArg("cml.ar.createValueRegisterForBoundedContext")),
+    );
+
+    // Register preview command
+    context.subscriptions.push(
+        commands.registerCommand("cml.preview", () => CmlPreviewPanel.show())
     );
 
     // Register quickfix commands
