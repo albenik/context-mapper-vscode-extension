@@ -4,7 +4,7 @@
 
 import { commands, window, workspace, Uri, OpenDialogOptions, InputBoxOptions, ViewColumn } from "vscode";
 import * as editor from "../editors/cml-editor";
-import { CommandType } from "./command"
+import { CommandType } from "./command";
 import * as fs from 'fs';
 
 export function generatePlantUML(): CommandType {
@@ -33,14 +33,14 @@ export function generateGenericTextFile(): CommandType {
             prompt: 'Please enter a name for the file that shall be generated.',
             validateInput: (value: string) => {
                 if (!value || 0 === value.length)
-                    return 'Please enter a non-empty string as filename.';
+                    {return 'Please enter a non-empty string as filename.';}
                 return '';
             }
-        }
+        };
 
-        const uriSelection: Uri[] = await window.showOpenDialog(fileOptions);
+        const uriSelection = await window.showOpenDialog(fileOptions);
 
-        const outputFileName: string = await window.showInputBox(inputBoxOptions);
+        const outputFileName = await window.showInputBox(inputBoxOptions);
         if (uriSelection && uriSelection[0]) {
             const templateUri: string = uriSelection[0].toString();
             const generateFunction: Function = generate('cml.generate.generic.text.file', 'The file has been generated into the src-gen folder.', { templateUri, outputFileName });
@@ -51,11 +51,14 @@ export function generateGenericTextFile(): CommandType {
 
 export function generateContextMap(): CommandType {
     return async () => {
+        if (!window.activeTextEditor) { return; }
         const currentDocument = window.activeTextEditor.document;
         const configuration = workspace.getConfiguration('', currentDocument.uri);
 
-        var selection = [{ label: "png", picked: true }, { label: "svg", picked: true }, { label: "dot", picked: true }];
-        const selectedFormats: string[] = (await window.showQuickPick(selection, { canPickMany: true })).map(item => item.label);
+        const selection = [{ label: "png", picked: true }, { label: "svg", picked: true }, { label: "dot", picked: true }];
+        const picked = await window.showQuickPick(selection, { canPickMany: true });
+        if (!picked) { return; }
+        const selectedFormats: string[] = picked.map(item => item.label);
 
         const params = {
             formats: selectedFormats,
@@ -66,17 +69,17 @@ export function generateContextMap(): CommandType {
             generateLabels: configuration.get('generation.contextMapGenerator.generateLabels') as boolean,
             labelSpacingFactor: configuration.get('generation.contextMapGenerator.labelSpacingFactor') as number,
             clusterTeams: configuration.get('generation.contextMapGenerator.clusterTeams') as boolean
-        }
+        };
 
         if (selectedFormats && params) {
             const generateFunction: Function = generate('cml.generate.contextmap', 'The files have been generated into the src-gen folder.', params);
             await generateFunction();
 
             // preview png if it was generated
-            var inputFileName = currentDocument.uri.toString().substring(currentDocument.uri.toString().lastIndexOf("/") + 1, currentDocument.uri.toString().length - 4);
-            var pngUri = Uri.file(workspace.rootPath + "/src-gen/" + inputFileName + "_ContextMap.png");
+            const inputFileName = currentDocument.uri.toString().substring(currentDocument.uri.toString().lastIndexOf("/") + 1, currentDocument.uri.toString().length - 4);
+            const pngUri = Uri.file(workspace.rootPath + "/src-gen/" + inputFileName + "_ContextMap.png");
             if (fs.existsSync(pngUri.fsPath))
-                await commands.executeCommand('vscode.open', pngUri, { viewColumn: ViewColumn.Two });
+                {await commands.executeCommand('vscode.open', pngUri, { viewColumn: ViewColumn.Two });}
         }
     };
 }
@@ -84,9 +87,9 @@ export function generateContextMap(): CommandType {
 function generate(command: string, successMessage: string, ...additionalParameters: any[]): CommandType {
     return async () => {
         if (editor.isNotCMLEditor())
-            return;
+            {return;}
 
-        if (editor.documentHasURI()) {
+        if (editor.documentHasURI() && window.activeTextEditor) {
             console.log(`Send command ${command} to CML language server.`);
             const returnVal: string = await commands.executeCommand(command, window.activeTextEditor.document.uri.toString(), additionalParameters);
             if (returnVal.startsWith('Error occurred:')) {
