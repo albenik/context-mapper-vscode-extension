@@ -57,8 +57,14 @@ task checkVersion() {
     doLast {
         def packageJsonFile = file('package.json')
         def json = new groovy.json.JsonSlurper().parseText(packageJsonFile.text)
-        if(!project.version.toString().equals(json.version))
-            throw new GradleException("The project (Gradle) version and the extension (NPM) version do not match! (${json.version} != ${project.version})")
+        if(!project.version.toString().equals(json.version)) {
+            def msg = "The project (Gradle) version and the extension (NPM) version do not match! (${json.version} != ${project.version})"
+            if (project.version.toString() == '0.1.0-SNAPSHOT') {
+                logger.warn("WARNING: ${msg} (nebula.release could not infer version from git tags)")
+            } else {
+                throw new GradleException(msg)
+            }
+        }
     }
 }
 
