@@ -3,7 +3,7 @@
 import * as path from 'path';
 import * as os from 'os';
 
-import {Trace} from 'vscode-jsonrpc';
+import { Trace } from 'vscode-jsonrpc';
 import { commands, workspace, ExtensionContext } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 import * as generators from "./commands/generators";
@@ -13,23 +13,22 @@ import * as quickfixCommands from "./commands/quickfixcommands";
 let lc: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-    let launcher = os.platform() === 'win32' ? 'context-mapper-lsp.bat' : 'context-mapper-lsp';
-    let script = context.asAbsolutePath(path.join('lsp', 'bin', launcher));
+    const launcher = os.platform() === 'win32' ? 'context-mapper-lsp.bat' : 'context-mapper-lsp';
+    const script = context.asAbsolutePath(path.join('lsp', 'bin', launcher));
 
-    let serverOptions: ServerOptions = {
+    const serverOptions: ServerOptions = {
         run: { command: script, options: { shell: true } },
         debug: { command: script, args: ['-log'], options: { env: createDebugEnv(), shell: true } }
     };
 
-    let clientOptions: LanguageClientOptions = {
+    const clientOptions: LanguageClientOptions = {
         documentSelector: ['cml', 'scl'],
         synchronize: {
             fileEvents: workspace.createFileSystemWatcher('**/*.*')
         }
     };
 
-    // Create the language client and start the client.
-    let lc = new LanguageClient('CML Language Server', serverOptions, clientOptions);
+    lc = new LanguageClient('CML Language Server', serverOptions, clientOptions);
 
     // Register generator commands
     context.subscriptions.push(
@@ -77,5 +76,5 @@ export function deactivate() {
 function createDebugEnv() {
     return Object.assign({
         JAVA_OPTS:"-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n,quiet=y"
-    }, process.env)
+    }, process.env);
 }

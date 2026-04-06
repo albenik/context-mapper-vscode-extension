@@ -4,25 +4,25 @@
 
 import { commands, window, Uri, ViewColumn } from "vscode";
 import * as editor from "../editors/cml-editor";
-import { CommandType } from "./command"
+import { CommandType } from "./command";
 import * as input from "./userinput";
 import * as fs from 'fs';
 
 export function deriveSubdomainFromUserRequirements(): CommandType {
     return async (...args: any[]) => {
-        var i: number;
-        var userRequirements: string[] = [];
+        let i: number;
+        const userRequirements: string[] = [];
         for (i = 1; i < args.length; i++) {
             userRequirements.push(args[i]);
         }
 
-        const domainName: string = await input.askForName("Please provide a name for the domain.", "NewDomain");
+        const domainName = await input.askForName("Please provide a name for the domain.", "NewDomain");
         if (!domainName)
-            return;
+            {return;}
 
-        const subDomainName: string = await input.askForName("Please provide a name for the Subdomain.", "NewSubDomain");
+        const subDomainName = await input.askForName("Please provide a name for the Subdomain.", "NewSubDomain");
         if (!subDomainName)
-            return;
+            {return;}
 
         const transformFunction: Function = transform('cml.ar.deriveSubdomainFromURs', domainName, subDomainName, userRequirements);
         transformFunction();
@@ -31,15 +31,15 @@ export function deriveSubdomainFromUserRequirements(): CommandType {
 
 export function deriveBoundedContextFromSubdomains(): CommandType {
     return async (...args: any[]) => {
-        var i: number;
-        var subdomains: string[] = [];
+        let i: number;
+        const subdomains: string[] = [];
         for (i = 1; i < args.length; i++) {
             subdomains.push(args[i]);
         }
 
-        const boundedContextName: string = await input.askForName("Please provide a name for the new Bounded Context.", "NewBoundedContext");
+        const boundedContextName = await input.askForName("Please provide a name for the new Bounded Context.", "NewBoundedContext");
         if (!boundedContextName)
-            return;
+            {return;}
 
         const transformFunction: Function = transform('cml.ar.deriveBoundedContextFromSDs', boundedContextName, subdomains);
         transformFunction();
@@ -50,7 +50,7 @@ export function deriveFrontendAndBackendSystemFromFeatureBC(): CommandType {
     return async (...args: any[]) => {
         const integrationType = await input.askForStringSelection("Please choose how the new systems shall integrate.", ["CONFORMIST", "ACL"]);
         if (!integrationType)
-            return;
+            {return;}
 
         const featureBoundedContextName: string = args[1];
 
@@ -65,11 +65,11 @@ export function splitSystemContextIntoSubsystems(): CommandType {
 
         const name4ExistingContext = await input.askForName("Please provide a name for the existing system.", existingSystemName);
         if (!name4ExistingContext)
-            return;
+            {return;}
 
         const name4NewContext = await input.askForName("Please provide a name for the new system that shall be extracted.", "NewSubSystem");
         if (!name4NewContext)
-            return;
+            {return;}
 
         const transformFunction: Function = transform('cml.ar.splitSystemContextIntoSubsystems', existingSystemName, name4ExistingContext, name4NewContext);
         transformFunction();
@@ -82,7 +82,7 @@ export function extractAggregatesByVolatility(): CommandType {
 
         const volatilityToExtract = await input.askForStringSelection("Please choose with which volatility value the Aggregates shall be extracted.", ["NORMAL", "OFTEN", "RARELY"]);
         if (!volatilityToExtract)
-            return;
+            {return;}
 
         const transformFunction: Function = transform('cml.ar.extractAggregatesByVolatility', boundedContextName, volatilityToExtract);
         transformFunction();
@@ -93,19 +93,19 @@ export function extractAggregatesByCohesion(): CommandType {
     return async (...args: any[]) => {
         const boundedContextName: string = args[1];
 
-        var i: number;
-        var aggregates: string[] = [];
+        let i: number;
+        const aggregates: string[] = [];
         for (i = 2; i < args.length; i++) {
             aggregates.push(args[i]);
         }
 
-        const selectedAggregates: string[] = await input.askForMultipleStringSelection("Please select the Aggregates that shall be extracted.", aggregates);
+        const selectedAggregates = await input.askForMultipleStringSelection("Please select the Aggregates that shall be extracted.", aggregates);
         if (!selectedAggregates || selectedAggregates.length == 0)
-            return;
+            {return;}
 
-        const newBoundedContextName: string = await input.askForName("Please define how the new Bounded Context shall be named.", "NewBoundedContext");
+        const newBoundedContextName = await input.askForName("Please define how the new Bounded Context shall be named.", "NewBoundedContext");
         if (!newBoundedContextName)
-            return;
+            {return;}
 
         const transformFunction: Function = transform('cml.ar.extractAggregatesByCohesion', boundedContextName, newBoundedContextName, selectedAggregates);
         transformFunction();
@@ -116,15 +116,15 @@ export function mergeAggregates(): CommandType {
     return async (...args: any[]) => {
         const firstAggregateName: string = args[1];
 
-        var i: number;
-        var aggregates2Select: string[] = [];
+        let i: number;
+        const aggregates2Select: string[] = [];
         for (i = 2; i < args.length; i++) {
             aggregates2Select.push(args[i]);
         }
 
-        const selectedAggregate: string = await input.askForStringSelection("Please select a second Aggregate with which you want to merge.", aggregates2Select);
+        const selectedAggregate = await input.askForStringSelection("Please select a second Aggregate with which you want to merge.", aggregates2Select);
         if (!selectedAggregate)
-            return;
+            {return;}
 
         const transformFunction: Function = transform('cml.ar.mergeAggregates', firstAggregateName, selectedAggregate);
         transformFunction();
@@ -135,15 +135,15 @@ export function mergeBoundedContexts(): CommandType {
     return async (...args: any[]) => {
         const firstBoundedContext: string = args[1];
 
-        var i: number;
-        var boundedContexts2Select: string[] = [];
+        let i: number;
+        const boundedContexts2Select: string[] = [];
         for (i = 2; i < args.length; i++) {
             boundedContexts2Select.push(args[i]);
         }
 
-        const selectecBoundedContext: string = await input.askForStringSelection("Please select a second Bounded Context with which you want to merge.", boundedContexts2Select);
+        const selectecBoundedContext = await input.askForStringSelection("Please select a second Bounded Context with which you want to merge.", boundedContexts2Select);
         if (!selectecBoundedContext)
-            return;
+            {return;}
 
         const transformFunction: Function = transform('cml.ar.mergeBoundedContexts', firstBoundedContext, selectecBoundedContext);
         transformFunction();
@@ -162,23 +162,23 @@ export function suspendPartnership(): CommandType {
         const modeBCode: string = "EXTRACT_NEW_BOUNDED_CONTEXT";
         const modeCCode: string = "REPLACE_RELATIONSHIP_WITH_UPSTREAM_DOWNSTREAM";
 
-        const selectedMode: string = await input.askForStringSelection("Please choose the strategy with which you want to suspend the partnership.", [modeB, modeC]);
+        const selectedMode = await input.askForStringSelection("Please choose the strategy with which you want to suspend the partnership.", [modeB, modeC]);
         if (!selectedMode)
-            return;
+            {return;}
 
         const mode: string = selectedMode === modeB ? modeBCode : modeCCode;
-        var transformFunction: Function;
+        let transformFunction: Function | undefined;
         if (mode === modeBCode) {
             console.log("chose mode B");
             transformFunction = transform('cml.ar.suspendPartnership', boundedContext1, boundedContext2, mode);
         } else if (mode === modeCCode) {
             console.log("chose mode C");
-            const upstreamContext: string = await input.askForStringSelection("Please choose which Bounded Context shall become Upstream in the Upstream-Downstream relationship.", [boundedContext1, boundedContext2]);
+            const upstreamContext = await input.askForStringSelection("Please choose which Bounded Context shall become Upstream in the Upstream-Downstream relationship.", [boundedContext1, boundedContext2]);
             transformFunction = transform('cml.ar.suspendPartnership', boundedContext1, boundedContext2, mode, upstreamContext);
         }
 
-        if (transformFunction != null)
-            transformFunction();
+        if (transformFunction)
+            {transformFunction();}
     };
 }
 
@@ -187,15 +187,15 @@ export function executeGenericCommandWithSingleStringArg(command: string): Comma
         const singleInputId: string = args[1];
         const transformFunction: Function = transform(command, singleInputId);
         transformFunction();
-    }
+    };
 }
 
 function transform(command: string, ...additionalParameters: any[]): CommandType {
     return async () => {
         if (editor.isNotCMLEditor())
-            return;
+            {return;}
 
-        if (editor.documentHasURI()) {
+        if (editor.documentHasURI() && window.activeTextEditor) {
             console.log(`Send command ${command} to CML language server.`);
             const returnVal: string = await commands.executeCommand(command, window.activeTextEditor.document.uri.toString(), additionalParameters);
             if (returnVal.startsWith('Error occurred:')) {

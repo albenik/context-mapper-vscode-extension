@@ -5,18 +5,18 @@
 import * as vscode from "vscode";
 import { commands, window } from "vscode";
 import * as editor from "../editors/cml-editor";
-import { CommandType } from "./command"
+import { CommandType } from "./command";
 import * as input from "./userinput";
 
 export function splitStoryByVerb(): CommandType {
     return async (...args: any[]) => {
         const storyName = args[1];
 
-        const firstVerb: string = await input.askForVerb("Please enter a verb for the splitted story (such as 'create', 'search', 'update', etc.).", "");
+        const firstVerb = await input.askForVerb("Please enter a verb for the splitted story (such as 'create', 'search', 'update', etc.).", "");
 
         if (firstVerb !== undefined) {
-            var verbList: string[] = [firstVerb];
-            var nextVerb = await input.askForVerb("Please enter a verb for the splitted story (such as 'create', 'search', 'update', etc.).", "");
+            const verbList: string[] = [firstVerb];
+            let nextVerb = await input.askForVerb("Please enter a verb for the splitted story (such as 'create', 'search', 'update', etc.).", "");
             while (nextVerb !== undefined) {
                 verbList.push(nextVerb);
                 nextVerb = await input.askForVerb("Please enter a verb for the splitted story (such as 'create', 'search', 'update', etc.).", "");
@@ -43,9 +43,9 @@ export function openCoordinationInSketchMiner(): CommandType {
 function transform(command: string, ...additionalParameters: any[]): CommandType {
     return async () => {
         if (editor.isNotCMLEditor())
-            return;
+            {return;}
 
-        if (editor.documentHasURI()) {
+        if (editor.documentHasURI() && window.activeTextEditor) {
             console.log(`Send command ${command} to CML language server.`);
             const returnVal: string = await commands.executeCommand(command, window.activeTextEditor.document.uri.toString(), additionalParameters);
             if (returnVal.startsWith('Error occurred:')) {

@@ -1,13 +1,16 @@
 {
     "compilerOptions": {
-        "target": "es6",
+        "target": "ES2022",
         "module": "commonjs",
         "moduleResolution": "node",
         "sourceMap": false,
         "inlineSources": false,
         "declaration": true,
         "stripInternal": true,
-        "lib": [ "es6" ],
-        "outDir": "../out"
+        "strict": true,
+        "lib": [ "ES2022" ],
+        "outDir": "../out",
+        "skipLibCheck": true,
+        "esModuleInterop": true
     }
 }
