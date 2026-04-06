@@ -1,17 +1,17 @@
 {
-    "name": "context-mapper-vscode-extension",
-    "displayName": "Context Mapper",
-    "description": "The Context Mapper VS Code Extension",
+    "name": "context-mapper-vscode-extension-fork",
+    "displayName": "Context Mapper Fork",
+    "description": "The Context Mapper VS Code Extension Fork",
     "version": "1.0.0",
-    "publisher": "contextmapper",
+    "publisher": "albenik",
     "icon": "resources/contextmapper.png",
     "license": "Apache-2.0",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ContextMapper/vscode-extension.git"
+        "url": "https://github.com/albenik/context-mapper-vscode-extension.git"
     },
     "bugs": {
-        "url": "https://github.com/ContextMapper/vscode-extension/issues"
+        "url": "https://github.com/albenik/context-mapper-vscode-extension/issues"
     },
     "engines": {
         "vscode": "^1.95.0"
