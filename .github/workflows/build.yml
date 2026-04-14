@@ -43,6 +43,12 @@ jobs:
         run: |
           VER=$(./gradlew properties --console=plain --no-daemon | grep '^version:' | awk '{print $2}')
           npm pkg set "version=${VER}"
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Run tests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: npm run test
       - name: Build with Gradle
         uses: GabrielBB/xvfb-action@v1.6
         with:
