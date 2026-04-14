@@ -43,8 +43,9 @@ and further background information [here](https://contextmapper.org/background-a
 To use the ContextMapper VS Code extension you need the following tools (besides
 [VS Code](https://code.visualstudio.com/) and our extension) installed locally:
 
-- [Oracle Java](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) or
-  [OpenJDK](https://openjdk.java.net/) (JRE 11 or newer)
+- [Oracle Java](https://www.oracle.com/java/technologies/downloads/) or a compatible runtime such as
+  [Eclipse Temurin](https://adoptium.net/) (JRE 11 or newer to run the extension; **JDK 25 (LTS)** with Temurin
+  recommended when building from source — see [`AGENTS.md`](AGENTS.md))
 - If you want to use our [Context Map generator](https://contextmapper.org/docs/context-map-generator/) you need to have
   [Graphviz](https://www.graphviz.org/) installed on your system.
   - Ensure that the binaries are part of the _PATH_ environment variable and can be called from the terminal.

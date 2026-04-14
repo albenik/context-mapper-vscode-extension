@@ -1,14 +1,5 @@
-buildscript {
-    repositories {
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath "com.github.node-gradle:gradle-node-plugin:${gradleNodePluginVersion}"
-    }
-}
-
 plugins {
-    id 'nebula.release' version '19.0.10'
+    id 'nebula.release' version '21.0.0'
     id 'com.github.node-gradle.node' version "${gradleNodePluginVersion}"
 }
 
@@ -77,7 +68,7 @@ task test(dependsOn: [npmInstall,checkVersion], type: NpmTask) {
 }
 
 task vscodeExtension(dependsOn: [npmInstall, npmInstallVsce, test], type: NodeTask) {
-    ext.destDir = new File(buildDir, 'vscode')
+    ext.destDir = layout.buildDirectory.dir('vscode').get().asFile
     ext.archiveName = "${project.name}-${project.version.toString()}.vsix"
     ext.destPath = "${ext.destDir}/${ext.archiveName}"
     inputs.with {
@@ -144,7 +135,7 @@ task publish(dependsOn: vscodeExtension, type: NodeTask) {
         workingDir = projectDir
     }
     doFirst {
-        args = [ 'publish', '-p', System.getenv('MS_MARKETPLACE_ACCESS_TOKEN'), "--packagePath", "${project.buildDir}/vscode/vscode-extension-${project.version}.vsix"]
+        args = [ 'publish', '-p', System.getenv('MS_MARKETPLACE_ACCESS_TOKEN'), "--packagePath", "${layout.buildDirectory.get().asFile}/vscode/vscode-extension-${project.version}.vsix"]
     }
 }
 
