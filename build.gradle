@@ -20,14 +20,6 @@ dependencies {
     cmlLSPTar "org.contextmapper:context-mapper-lsp:${cmlVersion}@tar"
 }
 
-task npmInstallVsce(type: NpmTask, dependsOn: [npmSetup, npmInstall]) {
-    ext.destPath = "$rootProject.projectDir/node_modules/vsce"
-    outputs.dir(destPath)
-    group 'Node'
-    description 'Installs the NodeJS package "Visual Studio Code Extension Manager"'
-    args = [ 'install', 'vsce' ]
-}
-
 node {
     version = nodeVersion
     download = true
@@ -36,7 +28,7 @@ node {
 
 def inputFiles = fileTree(
         dir: projectDir,
-        excludes: [ 'out/**', '.gitignore', '.gradle/**', 'build/**', '*.gradle', 'node_modules/**' ]
+        excludes: [ 'out/**', '.gitignore', '.gradle/**', 'build/**', '*.gradle', 'node_modules/**', '.vscode-test/**' ]
 )
 
 npmInstall {
@@ -67,19 +59,18 @@ task test(dependsOn: [npmInstall,checkVersion], type: NpmTask) {
     inputs.file 'package-lock.json'
 }
 
-task vscodeExtension(dependsOn: [npmInstall, npmInstallVsce, test], type: NodeTask) {
+task vscodeExtension(dependsOn: [npmInstall, test], type: NodeTask) {
     ext.destDir = layout.buildDirectory.dir('vscode').get().asFile
     ext.archiveName = "${project.name}-${project.version.toString()}.vsix"
     ext.destPath = "${ext.destDir}/${ext.archiveName}"
     inputs.with {
         files inputFiles
-        dir npmInstallVsce.destPath
     }
     outputs.dir destDir
     doFirst {
         destDir.mkdirs()
     }
-    script = file("$npmInstallVsce.destPath/vsce")
+    script = file("$rootProject.projectDir/node_modules/@vscode/vsce/vsce")
     args = [ 'package', '--out', ext.destPath ]
     execOverrides {
         workingDir = projectDir
@@ -130,7 +121,7 @@ task startCode(type:Exec, dependsOn: installExtension) {
 }
 
 task publish(dependsOn: vscodeExtension, type: NodeTask) {
-    script = file("$rootProject.projectDir/node_modules/vsce/vsce")
+    script = file("$rootProject.projectDir/node_modules/@vscode/vsce/vsce")
     execOverrides {
         workingDir = projectDir
     }

@@ -12,7 +12,7 @@ LSP server. See `README.md` for user-facing docs and build instructions.
 - **JDK 25** (LTS) — **Eclipse Temurin** recommended (same distribution as CI via `actions/setup-java` with
   `distribution: temurin`). Required for Gradle and the LSP server binary at `lsp/bin/context-mapper-lsp`.
 - **Node.js 22.13.0** (minimum; via nvm) — matches `gradle.properties` `nodeVersion`.
-- **libsecret-1-dev** — required by `vsce`/`keytar` native module.
+- **libsecret-1-dev** — required by `@vscode/vsce` / `keytar` native module when publishing with credential store.
 - **Xvfb** — VS Code extension tests require a display server.
 
 #### JDK vendor choice
@@ -52,7 +52,7 @@ available in the Maven repository, you can manually download the latest stable r
 | Compile TS        | `npm run compile`                                                                                   |
 | Lint              | `npx tslint -p ./src`                                                                               |
 | Run tests         | `xvfb-run -a npm run test`                                                                          |
-| Package .vsix     | `npx vsce package`                                                                                  |
+| Package .vsix     | `npx @vscode/vsce package`                                                                          |
 | Full Gradle build | `JAVA_HOME=<path-to-jdk-25> xvfb-run -a ./gradlew clean snapshot vscodeExtension`                   |
 
 ### Gotchas

@@ -3,7 +3,7 @@ name: Release VS Code Extension
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -11,67 +11,67 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.13.0'
-    - name: Set up JDK 25 (Eclipse Temurin)
-      uses: actions/setup-java@v5
-      with:
-        java-version: '25'
-        distribution: temurin
-    - name: Install Dependencies
-      run: sudo apt-get -y install libsecret-1-dev
-    - name: Gradle caches  
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Validate release tag and package.json version
-      run: |
-        if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          echo "Tag '${GITHUB_REF_NAME}' is not valid semver (expected vMAJOR.MINOR.PATCH)."
-          exit 1
-        fi
-        TAG_VERSION="${GITHUB_REF_NAME#v}"
-        PKG_VERSION="$(node -p "require('./package.json').version")"
-        if [[ "${PKG_VERSION}" != "${TAG_VERSION}" ]]; then
-          echo "package.json version '${PKG_VERSION}' does not match tag '${GITHUB_REF_NAME}' (expected '${TAG_VERSION}')."
-          exit 1
-        fi
-    - name: Build release VSIX
-      uses: GabrielBB/xvfb-action@v1.6
-      with:
-        run: ./gradlew clean final vscodeExtension -Prelease.useLastTag=true
-    - name: Create GitHub release and upload VSIX
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: ${{ github.ref_name }}
-        name: ${{ github.ref_name }}
-        files: build/vscode/vscode-extension-*.vsix
-        generate_release_notes: true
-    - name: Publish to VS Code Marketplace
-      if: ${{ secrets.MS_MARKETPLACE_ACCESS_TOKEN != '' }}
-      uses: GabrielBB/xvfb-action@v1.6
-      with:
-        run: ./gradlew publish -Prelease.useLastTag=true
-      env:
-        MS_MARKETPLACE_ACCESS_TOKEN: ${{ secrets.MS_MARKETPLACE_ACCESS_TOKEN }}
-    - name: Publish to OpenVSX
-      if: ${{ secrets.OPENVSX_ACCESS_TOKEN != '' }}
-      uses: GabrielBB/xvfb-action@v1.6
-      with:
-        run: ./gradlew publishToOpenVSX -Prelease.useLastTag=true
-      env:
-        OPENVSX_ACCESS_TOKEN: ${{ secrets.OPENVSX_ACCESS_TOKEN }}
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+      - name: Set up JDK 25 (Eclipse Temurin)
+        uses: actions/setup-java@v5
+        with:
+          java-version: "25"
+          distribution: temurin
+      - name: Install Dependencies
+        run: sudo apt-get -y install libsecret-1-dev
+      - name: Gradle caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Validate release tag and package.json version
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag '${GITHUB_REF_NAME}' is not valid semver (expected vMAJOR.MINOR.PATCH)."
+            exit 1
+          fi
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "${PKG_VERSION}" != "${TAG_VERSION}" ]]; then
+            echo "package.json version '${PKG_VERSION}' does not match tag '${GITHUB_REF_NAME}' (expected '${TAG_VERSION}')."
+            exit 1
+          fi
+      - name: Build release VSIX
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: ./gradlew clean final vscodeExtension -Prelease.useLastTag=true
+      - name: Create GitHub release and upload VSIX
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          files: build/vscode/vscode-extension-*.vsix
+          generate_release_notes: true
+      - name: Publish to VS Code Marketplace
+        if: ${{ secrets.MS_MARKETPLACE_ACCESS_TOKEN != '' }}
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: ./gradlew publish -Prelease.useLastTag=true
+        env:
+          MS_MARKETPLACE_ACCESS_TOKEN: ${{ secrets.MS_MARKETPLACE_ACCESS_TOKEN }}
+      - name: Publish to OpenVSX
+        if: ${{ secrets.OPENVSX_ACCESS_TOKEN != '' }}
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: ./gradlew publishToOpenVSX -Prelease.useLastTag=true
+        env:
+          OPENVSX_ACCESS_TOKEN: ${{ secrets.OPENVSX_ACCESS_TOKEN }}
