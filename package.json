@@ -220,6 +220,7 @@
         "typescript": "^5.7.0"
     },
     "dependencies": {
+        "vsce": "^2.15.0",
         "vscode-languageclient": "^9.0.1"
     },
     "scripts": {
