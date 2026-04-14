@@ -1,14 +1,5 @@
-buildscript {
-    repositories {
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath "com.github.node-gradle:gradle-node-plugin:${gradleNodePluginVersion}"
-    }
-}
-
 plugins {
-    id 'nebula.release' version '19.0.10'
+    id 'nebula.release' version '21.0.0'
     id 'com.github.node-gradle.node' version "${gradleNodePluginVersion}"
 }
 
@@ -29,7 +20,7 @@ dependencies {
     cmlLSPTar "org.contextmapper:context-mapper-lsp:${cmlVersion}@tar"
 }
 
-task npmInstallVsce(type: NpmTask, dependsOn: npmSetup) {
+task npmInstallVsce(type: NpmTask, dependsOn: [npmSetup, npmInstall]) {
     ext.destPath = "$rootProject.projectDir/node_modules/vsce"
     outputs.dir(destPath)
     group 'Node'
@@ -45,7 +36,7 @@ node {
 
 def inputFiles = fileTree(
         dir: projectDir,
-        excludes: [ 'out/**', '.gitignore', '.gradle/**', 'build/**', '*.gradle' ]
+        excludes: [ 'out/**', '.gitignore', '.gradle/**', 'build/**', '*.gradle', 'node_modules/**' ]
 )
 
 npmInstall {
@@ -77,7 +68,7 @@ task test(dependsOn: [npmInstall,checkVersion], type: NpmTask) {
 }
 
 task vscodeExtension(dependsOn: [npmInstall, npmInstallVsce, test], type: NodeTask) {
-    ext.destDir = new File(buildDir, 'vscode')
+    ext.destDir = layout.buildDirectory.dir('vscode').get().asFile
     ext.archiveName = "${project.name}-${project.version.toString()}.vsix"
     ext.destPath = "${ext.destDir}/${ext.archiveName}"
     inputs.with {
@@ -140,14 +131,18 @@ task startCode(type:Exec, dependsOn: installExtension) {
 
 task publish(dependsOn: vscodeExtension, type: NodeTask) {
     script = file("$rootProject.projectDir/node_modules/vsce/vsce")
-    args = [ 'publish', '-p', System.getenv('MS_MARKETPLACE_ACCESS_TOKEN'), "--packagePath", "${project.buildDir}/vscode/vscode-extension-${project.version}.vsix"]
     execOverrides {
         workingDir = projectDir
+    }
+    doFirst {
+        args = [ 'publish', '-p', System.getenv('MS_MARKETPLACE_ACCESS_TOKEN'), "--packagePath", "${layout.buildDirectory.get().asFile}/vscode/vscode-extension-${project.version}.vsix"]
     }
 }
 
 task publishToOpenVSX(dependsOn: vscodeExtension, type: Exec) {
-    commandLine 'npx', 'ovsx', '--debug', 'publish', "--packagePath", projectDir, '--pat', System.getenv('OPENVSX_ACCESS_TOKEN')
+    doFirst {
+        commandLine 'npx', 'ovsx', '--debug', 'publish', "--packagePath", projectDir, '--pat', System.getenv('OPENVSX_ACCESS_TOKEN')
+    }
 }
 
 task updateVersion() {

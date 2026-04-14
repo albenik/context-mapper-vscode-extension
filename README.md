@@ -1,6 +1,6 @@
 ![Context Mapper](https://raw.githubusercontent.com/wiki/ContextMapper/context-mapper-dsl/logo/cm-logo-github-small.png)
 
-# Context Mapper VS Code Extension
+# Context Mapper VS Code Extension Fork
 
 [![Build](https://github.com/albenik/context-mapper-vscode-extension/actions/workflows/build.yml/badge.svg)](https://github.com/albenik/context-mapper-vscode-extension/actions)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -9,9 +9,8 @@ This repository is a **fork** of the
 [original Context Mapper VS Code extension](https://github.com/ContextMapper/vscode-extension). It has been **enhanced
 with AI-assisted development** to add functionality that was missing from the upstream project. If you have concerns
 about AI-generated or AI-assisted code in your toolchain, you should be aware of that before using this fork. The
-[official extension](https://github.com/ContextMapper/vscode-extension) and
-[Marketplace listing](https://marketplace.visualstudio.com/items?itemName=contextmapper.context-mapper-vscode-extension)
-remain alternatives without this fork’s additions.
+[official extension](https://github.com/ContextMapper/vscode-extension) remains an alternative without this fork’s
+additions.
 
 [ContextMapper](https://contextmapper.org/) is an open source tool providing a Domain-specific Language based on
 Domain-Driven Design (DDD) patterns for context mapping and service decomposition.
@@ -34,7 +33,7 @@ and further background information [here](https://contextmapper.org/background-a
 **Installation Links:**
 
 - VS Code:
-  - **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=contextmapper.context-mapper-vscode-extension)**
+  - **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=albenik.context-mapper-vscode-extension-fork)**
 - Eclipse:
   - **[Eclipse Marketplace](https://marketplace.eclipse.org/content/context-mapper)**
   - Update Site: https://contextmapper.jfrog.io/artifactory/context-mapper-eclipse/updates/
@@ -44,8 +43,9 @@ and further background information [here](https://contextmapper.org/background-a
 To use the ContextMapper VS Code extension you need the following tools (besides
 [VS Code](https://code.visualstudio.com/) and our extension) installed locally:
 
-- [Oracle Java](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) or
-  [OpenJDK](https://openjdk.java.net/) (JRE 11 or newer)
+- [Oracle Java](https://www.oracle.com/java/technologies/downloads/) or a compatible runtime such as
+  [Eclipse Temurin](https://adoptium.net/) (JRE 11 or newer to run the extension; **JDK 25 (LTS)** with Temurin
+  recommended when building from source — see [`AGENTS.md`](AGENTS.md))
 - If you want to use our [Context Map generator](https://contextmapper.org/docs/context-map-generator/) you need to have
   [Graphviz](https://www.graphviz.org/) installed on your system.
   - Ensure that the binaries are part of the _PATH_ environment variable and can be called from the terminal.
@@ -58,8 +58,8 @@ To use the ContextMapper VS Code extension you need the following tools (besides
 ## Getting Started
 
 - The extension can be downloaded and installed via the
-  [Marketplace](https://marketplace.visualstudio.com/items?itemName=contextmapper.context-mapper-vscode-extension).
-- Or: search for "Context Mapper" the extensions view of your running VS code (Ctrl+Shift+X).
+  [Marketplace](https://marketplace.visualstudio.com/items?itemName=albenik.context-mapper-vscode-extension-fork).
+- Or: search for "Context Mapper Fork" in the extensions view of your running VS code (Ctrl+Shift+X).
 
 - Next steps after installation: Consult our [website](https://contextmapper.org/) to learn how to
   [get started with Context Mapper](https://contextmapper.org/docs/getting-started/).

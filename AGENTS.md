@@ -9,11 +9,33 @@ LSP server. See `README.md` for user-facing docs and build instructions.
 
 ### Key dependencies
 
-- **JDK 17** (minimum) (`JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64`) — required for the LSP server binary at
-  `lsp/bin/context-mapper-lsp`.
-- **Node.js 22.12.0** (minimum; via nvm) — matches `gradle.properties` `nodeVersion`.
+- **JDK 25** (LTS) — **Eclipse Temurin** recommended (same distribution as CI via `actions/setup-java` with
+  `distribution: temurin`). Required for Gradle and the LSP server binary at `lsp/bin/context-mapper-lsp`.
+- **Node.js 22.13.0** (minimum; via nvm) — matches `gradle.properties` `nodeVersion`.
 - **libsecret-1-dev** — required by `vsce`/`keytar` native module.
 - **Xvfb** — VS Code extension tests require a display server.
+
+#### JDK vendor choice
+
+Use **Eclipse Temurin** unless you have a policy that requires another vendor (e.g. Amazon Corretto, Microsoft Build of
+OpenJDK, Oracle JDK). Temurin tracks OpenJDK LTS with broad tooling support and matches GitHub Actions in this repo.
+
+#### Installing JDK 25 locally (if missing)
+
+- **macOS (Homebrew)** — install the Temurin cask, then point `JAVA_HOME` at the JDK 25 home (adjust the path if your
+  Homebrew prefix differs):
+
+  ```bash
+  brew install --cask temurin@25
+  export JAVA_HOME="$(/usr/libexec/java_home -v 25)"
+  java -version
+  ```
+
+  If `temurin@25` is unavailable from Homebrew yet, install JDK 25 from [Adoptium](https://adoptium.net/) and set
+  `JAVA_HOME` to the extracted `Contents/Home` (macOS) or the unpacked JDK root (Linux).
+
+- **Linux (apt, Temurin packages)** — use Eclipse Temurin’s Debian/Ubuntu packages from Adoptium, then set `JAVA_HOME` to
+  the installed JDK directory (commonly under `/usr/lib/jvm/`, e.g. `temurin-25-jdk-amd64`).
 
 ### LSP server
 
@@ -31,7 +53,7 @@ available in the Maven repository, you can manually download the latest stable r
 | Lint              | `npx tslint -p ./src`                                                                               |
 | Run tests         | `xvfb-run -a npm run test`                                                                          |
 | Package .vsix     | `npx vsce package`                                                                                  |
-| Full Gradle build | `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 xvfb-run -a ./gradlew clean snapshot vscodeExtension` |
+| Full Gradle build | `JAVA_HOME=<path-to-jdk-25> xvfb-run -a ./gradlew clean snapshot vscodeExtension`                   |
 
 ### Gotchas
 
@@ -42,6 +64,6 @@ available in the Maven repository, you can manually download the latest stable r
   that case, use `npm ci && npm run compile && npm run test` directly.
 - Tests download a VS Code instance to `.vscode-test/` on first run via the `vscode-test` package. This directory is
   cached after the first run.
-- Always set `JAVA_HOME` to JDK 17 when running Gradle or the LSP server, since the system default may be a newer JDK
-  version that Gradle 7.5.1 does not support.
+- Use **JDK 25** for Gradle and the LSP server. Gradle **9.4.1** (wrapper) supports current JDKs; avoid mixing in an
+  older JDK that cannot run this Gradle version.
 - Always use `xvfb-run -a` (or set `DISPLAY`) when running tests headlessly.
