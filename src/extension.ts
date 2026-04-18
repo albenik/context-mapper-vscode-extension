@@ -3,18 +3,29 @@
 import * as path from 'path';
 import * as os from 'os';
 
-import { Trace } from 'vscode-jsonrpc';
-import { commands, workspace, ExtensionContext } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+import { Trace, type Message } from 'vscode-jsonrpc';
+import { commands, workspace, ExtensionContext, window } from 'vscode';
+import {
+    CloseAction,
+    CloseHandlerResult,
+    ErrorAction,
+    ErrorHandlerResult,
+    LanguageClient,
+    LanguageClientOptions,
+    ServerOptions,
+} from 'vscode-languageclient/node';
 import * as generators from "./commands/generators";
 import * as transformations from "./commands/transformations";
 import * as quickfixCommands from "./commands/quickfixcommands";
 import { CmlPreviewPanel } from "./preview/cmlPreviewPanel";
-import { setLanguageClient } from "./languageClientHolder";
+import { getPreviewLogger, registerPreviewLogger } from "./preview/previewLogger";
+import { recordLanguageClientStartupError, setLanguageClient } from "./languageClientHolder";
 
 let lc: LanguageClient;
 
 export function activate(context: ExtensionContext) {
+    registerPreviewLogger(context);
+
     const launcher = os.platform() === 'win32' ? 'context-mapper-lsp.bat' : 'context-mapper-lsp';
     const script = context.asAbsolutePath(path.join('lsp', 'bin', launcher));
 
@@ -27,11 +38,32 @@ export function activate(context: ExtensionContext) {
         documentSelector: ['cml', 'scl'],
         synchronize: {
             fileEvents: workspace.createFileSystemWatcher('**/*.*')
-        }
+        },
+        initializationFailedHandler: (error: unknown): boolean => {
+            getPreviewLogger().error('LSP initialize failed', error);
+            recordLanguageClientStartupError(error);
+            return false;
+        },
+        errorHandler: {
+            error(
+                err: Error,
+                _message: Message | undefined,
+                _count: number | undefined
+            ): ErrorHandlerResult {
+                getPreviewLogger().error('LSP connection error', err);
+                return { action: ErrorAction.Shutdown };
+            },
+            closed(): CloseHandlerResult {
+                getPreviewLogger().warn('LSP connection closed; not attempting to restart');
+                return { action: CloseAction.DoNotRestart };
+            },
+        },
     };
 
     lc = new LanguageClient('CML Language Server', serverOptions, clientOptions);
+    getPreviewLogger().info('Language client instance created', { id: 'CML Language Server' });
     setLanguageClient(lc);
+    getPreviewLogger().info('Language client registered in holder');
 
     // Register generator commands
     context.subscriptions.push(
@@ -74,7 +106,20 @@ export function activate(context: ExtensionContext) {
     );
 
     lc.setTrace(Trace.Verbose);
-    lc.start();
+    getPreviewLogger().info('Starting language server client…');
+    void lc
+        .start()
+        .then(() => getPreviewLogger().info('Language server client started'))
+        .catch((err: unknown) => {
+            getPreviewLogger().error('Language server client failed to start', err);
+            recordLanguageClientStartupError(err);
+            const msg = err instanceof Error ? err.message : String(err);
+            void window.showErrorMessage(
+                `CML Language Server failed to start: ${msg}. ` +
+                    'Context map preview is unavailable until this is fixed. ' +
+                    'See the "CML Preview" Output channel.'
+            );
+        });
 }
 
 export function deactivate() {
