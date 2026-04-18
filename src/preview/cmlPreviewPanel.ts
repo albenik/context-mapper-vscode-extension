@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { whenLanguageClientReady } from '../languageClientHolder';
 
 export class CmlPreviewPanel implements vscode.Disposable {
     public static readonly viewType = 'cml.preview';
@@ -149,6 +150,7 @@ export class CmlPreviewPanel implements vscode.Disposable {
         };
 
         try {
+            await whenLanguageClientReady();
             const returnVal: string = await vscode.commands.executeCommand(
                 'cml.generate.contextmap', documentUri, [params]
             );
@@ -160,9 +162,13 @@ export class CmlPreviewPanel implements vscode.Disposable {
             }
 
             this.showGeneratedImage();
-        } catch (err: any) {
-            const msg = err?.message || String(err);
-            this.showMessage(`Generation failed: ${msg}`);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            this.showMessage(
+                `Generation failed: ${msg}. ` +
+                'If the language server is still starting, try again in a moment. ' +
+                'Otherwise check the Output panel (CML Language Server) for errors.'
+            );
         } finally {
             this._generating = false;
         }
