@@ -10,6 +10,7 @@ import * as generators from "./commands/generators";
 import * as transformations from "./commands/transformations";
 import * as quickfixCommands from "./commands/quickfixcommands";
 import { CmlPreviewPanel } from "./preview/cmlPreviewPanel";
+import { setLanguageClient } from "./languageClientHolder";
 
 let lc: LanguageClient;
 
@@ -30,6 +31,7 @@ export function activate(context: ExtensionContext) {
     };
 
     lc = new LanguageClient('CML Language Server', serverOptions, clientOptions);
+    setLanguageClient(lc);
 
     // Register generator commands
     context.subscriptions.push(
