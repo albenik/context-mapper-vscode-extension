@@ -1,0 +1,32 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "compile",
+			"type": "npm",
+			"script": "compile",
+			"problemMatcher": ["$tsc"],
+			"presentation": { "reveal": "silent", "panel": "dedicated" },
+			"group": { "kind": "build", "isDefault": true }
+		},
+		{
+			"label": "copyLSPApplication",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": ["snapshot", "copyLSPApplication"],
+			"options": {
+				"env": {
+					"JAVA_HOME": "${env:JAVA_HOME}"
+				}
+			},
+			"presentation": { "reveal": "silent", "panel": "dedicated" },
+			"problemMatcher": []
+		},
+		{
+			"label": "f5-prep",
+			"dependsOn": ["copyLSPApplication", "compile"],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		}
+	]
+}

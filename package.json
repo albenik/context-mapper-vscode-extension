@@ -157,6 +157,18 @@
         "configuration": {
             "title": "Context Mapper",
             "properties": {
+                "cml.preview.logLevel": {
+                    "type": "string",
+                    "enum": ["off", "info", "debug"],
+                    "enumDescriptions": [
+                        "Disable CML Preview logging entirely.",
+                        "Log preview lifecycle events, LSP timings, artifact discovery, and errors.",
+                        "Everything 'info' logs plus high-frequency events (debounce ticks, view-state changes, per-event document tracking, config values)."
+                    ],
+                    "default": "info",
+                    "description": "Verbosity of the 'CML Preview' Output channel used to debug preview rendering.",
+                    "scope": "window"
+                },
                 "generation.contextMapGenerator.fixImageWidth": {
                     "type": "boolean",
                     "default": false,

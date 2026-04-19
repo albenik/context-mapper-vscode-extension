@@ -3,7 +3,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { spawnSync } from 'child_process';
 import { whenLanguageClientReady } from '../languageClientHolder';
+import { getPreviewLogger } from './previewLogger';
 
 export class CmlPreviewPanel implements vscode.Disposable {
     public static readonly viewType = 'cml.preview';
@@ -15,17 +17,24 @@ export class CmlPreviewPanel implements vscode.Disposable {
     private _document: vscode.TextDocument | undefined;
     private _debounceTimer: ReturnType<typeof setTimeout> | undefined;
     private _generating = false;
+    private _graphvizChecked = false;
+    private _graphvizOk = false;
 
     private static readonly DEBOUNCE_MS = 1000;
 
     public static show(): void {
         const editor = vscode.window.activeTextEditor;
         if (!editor || editor.document.languageId !== 'cml') {
+            getPreviewLogger().info('preview show() aborted: no active CML editor');
             vscode.window.showWarningMessage('Open a .cml file first to preview the context map.');
             return;
         }
 
         if (CmlPreviewPanel._instance) {
+            getPreviewLogger().info('preview panel revealed (existing instance)', {
+                documentUri: editor.document.uri.toString(),
+                viewColumn: vscode.ViewColumn.Two,
+            });
             CmlPreviewPanel._instance._panel.reveal(vscode.ViewColumn.Two, true);
             CmlPreviewPanel._instance.bindToDocument(editor.document);
             return;
@@ -38,6 +47,12 @@ export class CmlPreviewPanel implements vscode.Disposable {
         }
         const docDir = path.dirname(editor.document.uri.fsPath);
         roots.push(vscode.Uri.file(path.join(docDir, 'src-gen')));
+
+        getPreviewLogger().info('preview panel opened (new instance)', {
+            documentUri: editor.document.uri.toString(),
+            viewColumn: vscode.ViewColumn.Two,
+            localResourceRoots: roots.map((r) => r.fsPath),
+        });
 
         const panel = vscode.window.createWebviewPanel(
             CmlPreviewPanel.viewType,
@@ -59,6 +74,11 @@ export class CmlPreviewPanel implements vscode.Disposable {
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
         this._panel.onDidChangeViewState(() => {
+            getPreviewLogger().debug('preview webview view state changed', {
+                visible: this._panel.visible,
+                active: this._panel.active,
+                documentUri: this._document?.uri.toString(),
+            });
             if (this._panel.visible) {
                 this.render();
             }
@@ -66,17 +86,28 @@ export class CmlPreviewPanel implements vscode.Disposable {
 
         vscode.workspace.onDidSaveTextDocument(doc => {
             if (doc === this._document) {
+                getPreviewLogger().debug('onDidSaveTextDocument (bound CML)', {
+                    uri: doc.uri.toString(),
+                });
                 this.scheduleRender();
             }
         }, null, this._disposables);
 
         vscode.workspace.onDidChangeTextDocument(e => {
             if (e.document === this._document && e.contentChanges.length > 0) {
+                getPreviewLogger().debug('onDidChangeTextDocument (bound CML)', {
+                    uri: e.document.uri.toString(),
+                    changeCount: e.contentChanges.length,
+                });
                 this.scheduleRender();
             }
         }, null, this._disposables);
 
         vscode.window.onDidChangeActiveTextEditor(editor => {
+            getPreviewLogger().debug('onDidChangeActiveTextEditor', {
+                uri: editor?.document.uri.toString(),
+                languageId: editor?.document.languageId,
+            });
             if (editor && editor.document.languageId === 'cml') {
                 this.bindToDocument(editor.document);
             }
@@ -84,6 +115,7 @@ export class CmlPreviewPanel implements vscode.Disposable {
 
         vscode.workspace.onDidCloseTextDocument(doc => {
             if (doc === this._document) {
+                getPreviewLogger().debug('onDidCloseTextDocument (bound CML)', { uri: doc.uri.toString() });
                 this._document = undefined;
                 this.showMessage('The CML file has been closed.');
             }
@@ -93,6 +125,7 @@ export class CmlPreviewPanel implements vscode.Disposable {
     private bindToDocument(document: vscode.TextDocument): void {
         if (this._document === document) { return; }
         this._document = document;
+        getPreviewLogger().info('preview bound to document', { uri: document.uri.toString() });
         this._panel.title = `CML Preview – ${this.shortFileName(document)}`;
         this.render();
     }
@@ -103,30 +136,64 @@ export class CmlPreviewPanel implements vscode.Disposable {
     }
 
     private scheduleRender(): void {
+        getPreviewLogger().debug('render scheduled', { debounceMs: CmlPreviewPanel.DEBOUNCE_MS });
         if (this._debounceTimer) {
             clearTimeout(this._debounceTimer);
         }
         this._debounceTimer = setTimeout(() => {
             this._debounceTimer = undefined;
+            getPreviewLogger().debug('debounced render firing');
             this.render();
         }, CmlPreviewPanel.DEBOUNCE_MS);
     }
 
     private async render(): Promise<void> {
         if (!this._document) {
+            getPreviewLogger().debug('render() skipped: no bound document');
             this.showMessage('No CML file is open.');
             return;
         }
 
+        getPreviewLogger().debug('render() entered', {
+            documentUri: this._document.uri.toString(),
+            isDirty: this._document.isDirty,
+            generating: this._generating,
+        });
+
         if (this._generating) {
+            getPreviewLogger().info('render skipped: already generating');
             return;
         }
 
         if (this._document.isDirty) {
+            getPreviewLogger().info('saving dirty document before render', {
+                uri: this._document.uri.toString(),
+            });
             await this._document.save();
         }
 
         await this.generateAndShow();
+    }
+
+    private checkGraphviz(): boolean {
+        if (this._graphvizChecked) {
+            return this._graphvizOk;
+        }
+        try {
+            const r = spawnSync('dot', ['-V'], { timeout: 3000, stdio: 'pipe' });
+            this._graphvizOk = r.status === 0;
+            getPreviewLogger().info('graphviz preflight', {
+                ok: this._graphvizOk,
+                stderr: r.stderr?.toString().trim(),
+                status: r.status,
+                error: r.error?.message,
+            });
+        } catch (err: unknown) {
+            this._graphvizOk = false;
+            getPreviewLogger().warn('graphviz preflight threw', err);
+        }
+        this._graphvizChecked = true;
+        return this._graphvizOk;
     }
 
     private async generateAndShow(): Promise<void> {
@@ -134,6 +201,18 @@ export class CmlPreviewPanel implements vscode.Disposable {
 
         this._generating = true;
         this.showMessage('Generating context map…');
+
+        if (!this.checkGraphviz()) {
+            getPreviewLogger().warn('graphviz missing: skipping LSP call');
+            this.showMessage(
+                'Graphviz is not installed on this machine. ' +
+                'The CML preview needs the `dot` binary to render context maps. ' +
+                'Install it (macOS: `brew install graphviz`, Linux: `apt-get install graphviz`, ' +
+                'Windows: `choco install graphviz`), then reopen the preview.'
+            );
+            this._generating = false;
+            return;
+        }
 
         const documentUri = this._document.uri.toString();
         const configuration = vscode.workspace.getConfiguration('', this._document.uri);
@@ -149,13 +228,23 @@ export class CmlPreviewPanel implements vscode.Disposable {
             clusterTeams: configuration.get('generation.contextMapGenerator.clusterTeams') as boolean
         };
 
+        getPreviewLogger().info('generateAndShow begin', { documentUri, params });
+
         try {
+            const lspWaitStarted = Date.now();
             await whenLanguageClientReady();
+            const waitedMs = Date.now() - lspWaitStarted;
+            getPreviewLogger().info('LSP ready', { waitedMs });
+
+            const execStarted = Date.now();
             const returnVal: string = await vscode.commands.executeCommand(
                 'cml.generate.contextmap', documentUri, [params]
             );
+            const durationMs = Date.now() - execStarted;
+            getPreviewLogger().info('executeCommand resolved', { durationMs, returnVal });
 
             if (returnVal && returnVal.startsWith('Error occurred:')) {
+                getPreviewLogger().warn('LSP reported generation error', { returnVal });
                 this.showMessage(returnVal);
                 this._generating = false;
                 return;
@@ -163,12 +252,19 @@ export class CmlPreviewPanel implements vscode.Disposable {
 
             this.showGeneratedImage();
         } catch (err: unknown) {
+            getPreviewLogger().error('generateAndShow failed', err);
             const msg = err instanceof Error ? err.message : String(err);
-            this.showMessage(
-                `Generation failed: ${msg}. ` +
-                'If the language server is still starting, try again in a moment. ' +
-                'Otherwise check the Output panel (CML Language Server) for errors.'
-            );
+            if (msg.startsWith('CML language server failed to start:')) {
+                this.showMessage(
+                    `${msg} Fix the language server issue and reload the window to retry.`
+                );
+            } else {
+                this.showMessage(
+                    `Generation failed: ${msg}. ` +
+                    'If the language server is still starting, try again in a moment. ' +
+                    'Otherwise check the Output panel ("CML Preview", "CML Language Server") for errors.'
+                );
+            }
         } finally {
             this._generating = false;
         }
@@ -194,9 +290,15 @@ export class CmlPreviewPanel implements vscode.Disposable {
             candidates.push(path.join(wsRoot, 'src-gen', `${baseName}_ContextMap.${ext}`));
         }
 
+        getPreviewLogger().debug('probing artifact', { baseName, ext, candidates });
+
         for (const p of candidates) {
-            if (fs.existsSync(p)) { return p; }
+            if (fs.existsSync(p)) {
+                getPreviewLogger().info('artifact found', { path: p });
+                return p;
+            }
         }
+        getPreviewLogger().warn('no artifact in canonical locations', { baseName, ext, candidates });
         return undefined;
     }
 
@@ -207,12 +309,14 @@ export class CmlPreviewPanel implements vscode.Disposable {
 
         const svgPath = this.findGeneratedFile(baseName, 'svg');
         if (svgPath) {
+            getPreviewLogger().info('selected artifact', { kind: 'svg', path: svgPath });
             this.displaySvgFile(svgPath);
             return;
         }
 
         const pngPath = this.findGeneratedFile(baseName, 'png');
         if (pngPath) {
+            getPreviewLogger().info('selected artifact', { kind: 'png', path: pngPath });
             this.displayPngFile(pngPath);
             return;
         }
@@ -223,6 +327,8 @@ export class CmlPreviewPanel implements vscode.Disposable {
         searchDirs.push(path.join(docDir, 'src-gen'));
         const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (wsRoot) { searchDirs.push(path.join(wsRoot, 'src-gen')); }
+
+        getPreviewLogger().debug('broad artifact search', { baseName, searchDirs });
 
         for (const dir of searchDirs) {
             if (!fs.existsSync(dir)) { continue; }
@@ -235,6 +341,8 @@ export class CmlPreviewPanel implements vscode.Disposable {
                 });
             if (files.length > 0) {
                 const filePath = path.join(dir, files[0]);
+                const kind = files[0].endsWith('.svg') ? 'svg' : 'png';
+                getPreviewLogger().info('selected artifact (broad search)', { kind, path: filePath });
                 if (files[0].endsWith('.svg')) {
                     this.displaySvgFile(filePath);
                 } else {
@@ -244,6 +352,7 @@ export class CmlPreviewPanel implements vscode.Disposable {
             }
         }
 
+        getPreviewLogger().warn('no artifact after broad search', { baseName, searchDirs });
         this.showMessage(
             'No generated context map image found. ' +
             'Ensure Graphviz is installed and a ContextMap is defined in the CML file.'
@@ -252,18 +361,24 @@ export class CmlPreviewPanel implements vscode.Disposable {
 
     private displaySvgFile(svgPath: string): void {
         try {
-            const svgContent = fs.readFileSync(svgPath, 'utf-8');
+            const buf = fs.readFileSync(svgPath);
+            const svgContent = buf.toString('utf-8');
+            getPreviewLogger().debug('rendering svg', { path: svgPath, bytes: buf.byteLength });
             this._panel.webview.html = this.buildHtmlForSvg(svgContent);
-        } catch {
+        } catch (err: unknown) {
+            getPreviewLogger().error('failed to read svg', err);
             this.showMessage('Failed to read generated SVG file.');
         }
     }
 
     private displayPngFile(pngPath: string): void {
         try {
+            const stat = fs.statSync(pngPath);
             const pngUri = this._panel.webview.asWebviewUri(vscode.Uri.file(pngPath));
+            getPreviewLogger().debug('rendering png', { path: pngPath, bytes: stat.size });
             this._panel.webview.html = this.buildHtmlForImg(pngUri.toString());
-        } catch {
+        } catch (err: unknown) {
+            getPreviewLogger().error('failed to read png', err);
             this.showMessage('Failed to read generated PNG file.');
         }
     }
@@ -337,6 +452,7 @@ export class CmlPreviewPanel implements vscode.Disposable {
     }
 
     private showMessage(message: string): void {
+        getPreviewLogger().debug('showing panel message', { message });
         this._panel.webview.html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -377,6 +493,7 @@ export class CmlPreviewPanel implements vscode.Disposable {
     }
 
     public dispose(): void {
+        getPreviewLogger().info('preview disposed');
         CmlPreviewPanel._instance = undefined;
 
         if (this._debounceTimer) {

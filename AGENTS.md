@@ -18,6 +18,10 @@ LSP server. See `README.md` for user-facing docs and build instructions.
   `com.github.node-gradle.node` plugin **downloads this exact version** into `.gradle/nodejs/` when `download = true`,
   so Gradle tasks ignore a locally installed Node. CI uses the same pin via `actions/setup-node` — see
   [`.github/workflows/build.yml`](.github/workflows/build.yml).
+- **Graphviz (`dot` on PATH)** — required by the CML preview pane. The LSP generator shells out to `dot` to render
+  context maps. Install via `brew install graphviz` (macOS), `sudo apt-get install graphviz` (Debian/Ubuntu), or
+  `choco install graphviz` (Windows). Without it, the preview surfaces an actionable message; the server may still log
+  `Error occurred: Problem in communication with server` if generation is attempted without Graphviz.
 - **libsecret-1-dev** (Linux only) — required by `@vscode/vsce` / `keytar` native module when publishing with the
   credential store; not needed for build or tests.
 - **Xvfb** (headless Linux only) — VS Code extension tests launch a VS Code window and need a display server. Not
@@ -84,6 +88,25 @@ available in the Maven repository, you can manually download the latest stable r
   afterwards to restore the committed version.
 - **Headless Linux** — use **`xvfb-run -a npm run test`** (or run `./gradlew test` under Xvfb) so the downloaded VS Code
   process has a display. Not needed on macOS/Windows.
+
+### F5 / Run Extension prerequisites
+
+F5 is wired (via [`.vscode/launch.json`](.vscode/launch.json) -> [`.vscode/tasks.json`](.vscode/tasks.json) `f5-prep`) to
+run `./gradlew snapshot copyLSPApplication` and `npm run compile` before launching the Extension Development Host, so
+`lsp/bin/context-mapper-lsp` is kept up to date automatically.
+
+Prerequisites that F5 does **not** set up for you:
+
+- **JDK 25** on `PATH`, or `JAVA_HOME` exported (see "Installing JDK 25 locally" above). Gradle 9.4.1 refuses to start
+  without a supported JDK. On macOS, `export JAVA_HOME="$(/usr/libexec/java_home -v 25)"` in `~/.zshrc` persists it for
+  both terminals and F5.
+- **First-time**: run `./gradlew snapshot copyLSPApplication` once manually to confirm the build works and to warm the
+  Gradle cache; subsequent F5 runs are UP-TO-DATE and fast.
+- **Graphviz** — `brew install graphviz` (or distro equivalent) so the `dot` binary is on PATH. F5 does not install it;
+  the preview pane shows an "Install Graphviz" message when `dot` is missing.
+
+The `Run Extension` launch config passes `--disable-extensions` so only this extension loads into the development host;
+other extensions installed in Cursor (Redocly, ms-edgedevtools, etc.) do not pollute the Debug Console.
 
 ### Gotchas
 
